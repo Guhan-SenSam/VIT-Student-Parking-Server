@@ -1,8 +1,11 @@
 from enum import Enum
-from sqlalchemy import Column, ForeignKey, Integer, DateTime, String
+from sqlalchemy import Column, ForeignKey, Integer, DateTime, String, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from database import Base
+from fastapi_users import schemas
+from fastapi_users.db import SQLAlchemyBaseUserTable
+from pydantic import EmailStr
 
 class VehicleType(Enum):
     two_wheeler = "two_wheeler"
@@ -11,6 +14,24 @@ class VehicleType(Enum):
 class ActionType(Enum):
     entry = "entry"
     exit = "exit"
+    
+class User(SQLAlchemyBaseUserTable, Base):
+    id = Column(String, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+    is_verified = Column(Boolean, default=False)
+    is_superuser = Column(Boolean, default=False)
+    
+# User Pydantic model
+class UserCreate(schemas.BaseUserCreate):
+    email: EmailStr
+
+class UserUpdate(schemas.BaseUserUpdate):
+    pass
+
+class UserDB(schemas.BaseUser):
+    pass
 
 
 class ParkingLots(Base):
@@ -33,4 +54,4 @@ class VehicleLog(Base):
     vehicle_type = Column(String, nullable=False)
     action = Column(String, nullable=False)
     
-    lot = relationship("ParkingLot", back_populates="vehicle_logs")
+    lot = relationship("ParkingLots", back_populates="vehicle_logs")
